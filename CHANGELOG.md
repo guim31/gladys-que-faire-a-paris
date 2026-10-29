@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-29
+
 ### Added
 
 - The outings of "Que faire à Paris ?", the agenda of the City of Paris (open data, no account),
@@ -24,4 +26,5 @@ the notes of the version's GitHub Release.
   in Paris" (one sentence).
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-que-faire-a-paris/commits/main
+[Unreleased]: https://github.com/guim31/gladys-que-faire-a-paris/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-que-faire-a-paris/releases/tag/v1.0.0

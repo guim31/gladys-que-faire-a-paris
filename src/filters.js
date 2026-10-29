@@ -19,7 +19,8 @@ const NIGHT_END_HOUR = 5;
 /**
  * The window of a period, read in Paris.
  * - today: from now to midnight;
- * - tonight: from 18:00 (or now, later) to 05:00 the next morning;
+ * - tonight: from 18:00 (or now, later) to 05:00 the next morning; after
+ *   midnight, from now to 05:00;
  * - tomorrow: the whole next day;
  * - weekend: Friday 18:00 to Sunday midnight — the coming one from Monday to
  *   Thursday, the current one (from now) from Friday evening to Sunday;
@@ -32,6 +33,10 @@ export function periodWindow(period, now) {
     case 'today':
       return { from: now, to: zonedInstant(addDays(today, 1)) };
     case 'tonight':
+      // After midnight, the night still running.
+      if (localParts(now).hour < NIGHT_END_HOUR) {
+        return { from: now, to: zonedInstant(today, NIGHT_END_HOUR) };
+      }
       return {
         from: Math.max(now, zonedInstant(today, EVENING_HOUR)),
         to: zonedInstant(addDays(today, 1), NIGHT_END_HOUR),

@@ -33,7 +33,7 @@ pushing.
 ```
 index.js                          SDK wiring only: handlers registered before connect()
 src/app.js                        every SDK handler, wired to the service (tests drive the same)
-src/service.js                    download cadence (8 h), hourly pass, zones, states, triggers
+src/service.js                    download cadence (8 h), 10-min pass, zones, states, triggers
 src/source.js                     Opendatasoft export of "Que faire à Paris ?" -> events
 src/filters.js                    periods, zones (house radius, arrondissement), filters
 src/devices.js                    zone device blueprint and its states
@@ -263,7 +263,7 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
   fiches, mise à jour quotidienne). Un seul export `exports/json` filtré côté API
   (`date_end >= date'<aujourd'hui>' and date_start is not null`, champs utiles seulement) : ~1,2 Mo
   compressé, ~5 Mo en clair. Zones et filtres s'appliquent dans le conteneur : un téléchargement sert
-  toutes les zones. Lecture toutes les 8 h, passe horaire sans réseau.
+  toutes les zones. Lecture toutes les 8 h, passe toutes les 10 min sans réseau (minuit, « prochain » à jour). `seen` = id → dernière vue, oublié après 30 jours.
 - **Piège des dates** : heures murales de Paris avec un faux décalage (`+00:00` sur
   `date_start`/`date_end`, `+02:00` dans `occurrences` même en hiver). Ignorer le décalage, lire
   l'heure en `Europe/Paris` (`wallClock`). Vu aussi : une fin avant le début (« 13:30 → 00:00 ») =

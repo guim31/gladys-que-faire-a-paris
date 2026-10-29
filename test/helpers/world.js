@@ -147,7 +147,7 @@ export async function create(world, part) {
 export const featureId = (device, key) =>
   device.features.find((feature) => feature.external_id.endsWith(`:${key}`))?.external_id;
 
-/** One pass of the hourly timer, `hours` later. */
+/** One pass of the timer, `hours` later. */
 export async function tick(world, hours = 1) {
   world.clock.advance(hours * HOUR);
   await world.service.refresh();

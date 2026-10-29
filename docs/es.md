@@ -87,7 +87,7 @@ la línea de periodo y número, mostrar u ocultar la insignia «Gratis».
 
 - **Nuevo evento anunciado**: un evento nunca visto, que corresponde a sus filtros, aparece en una
   zona seguida (comprobado en cada descarga).
-- **Evento que empieza hoy**: cada mañana entre las 8 y las 9, por cada evento de una zona seguida
+- **Evento que empieza hoy**: cada mañana hacia las 8 (antes de las 8:10), por cada evento de una zona seguida
   con una fecha que empieza ese día.
 
 Ambos se filtran por zona, tema principal y precio, y dan como variables la zona, el título, la
@@ -114,10 +114,12 @@ del primero. Campos: zonas, periodo (este fin de semana por defecto), número de
   [Que faire à Paris ?](https://opendata.paris.fr/explore/dataset/que-faire-a-paris-/) de la
   Ciudad de París, Open Database License (ODbL), unos 3.300 eventos, actualizado a diario.
 - La agenda se descarga **cada 8 horas** (tres veces al día como máximo, unos 1,2 MB comprimidos),
-  y los contadores se recalculan cada hora sin descarga. Una descarga fallida se reintenta una hora
+  y los contadores se recalculan cada 10 minutos sin descarga. Una descarga fallida se reintenta una hora
   después; mientras tanto se conservan los últimos eventos conocidos.
 - Las fechas del conjunto de datos llevan un desfase horario erróneo: la integración las lee como
   horas de París.
+- 50 eventos de escena por pasada como máximo (Gladys acepta 300 por minuto): primero la casa,
+  luego los distritos, luego todo París, los más próximos primero en cada zona.
 - Lo ya anunciado se guarda en `/data`: un reinicio no anuncia nada dos veces.
 
 ## Solución de problemas

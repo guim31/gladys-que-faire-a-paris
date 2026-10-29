@@ -85,7 +85,7 @@ hide the "Free" badge.
 
 - **New event announced**: an event never seen before, matching your filters, appears in a followed
   zone (checked at each download).
-- **Event starting today**: every morning between 8 and 9, for each event of a followed zone with a
+- **Event starting today**: every morning around 8 (by 8:10), for each event of a followed zone with a
   date starting that day.
 
 Both can be filtered by zone, main theme and price, and give the zone, title, date, place, theme,
@@ -111,9 +111,11 @@ of the first one. Fields: zones, period (this weekend by default), number of eve
   [Que faire à Paris ?](https://opendata.paris.fr/explore/dataset/que-faire-a-paris-/) of the City
   of Paris, Open Database License (ODbL), about 3,300 events, updated daily.
 - The agenda is downloaded **every 8 hours** (three times a day at most, about 1.2 MB compressed),
-  and the counts are computed again every hour without any download. A failed download is tried
+  and the counts are computed again every 10 minutes without any download. A failed download is tried
   again one hour later; the last known events are kept meanwhile.
 - The dates of the dataset carry a wrong time offset: the integration reads them as Paris times.
+- 50 scene events per pass at most (Gladys takes 300 a minute): the house first, then the
+  arrondissements, then all of Paris, soonest first in each zone.
 - What was already announced is kept in `/data`, so a restart announces nothing twice.
 
 ## Troubleshooting

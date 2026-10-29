@@ -18,7 +18,7 @@ widget), with one device per zone.
   and long runs included or not.
 - **Widget** "Outings in Paris": the next events of your zones, with date, place, "Free" badge and a
   link to paris.fr.
-- **Scene triggers**: "New event announced", "Event starting today" (every morning between 8 and 9).
+- **Scene triggers**: "New event announced", "Event starting today" (every morning around 8).
 - **Scene action** "What to do in Paris": this weekend (or tonight, tomorrow…) in one sentence,
   ready to send or to say.
 - Texts in English, French, German and Spanish.
@@ -44,7 +44,7 @@ the zones from the **Discover** tab. Full guide: [English](docs/en.md), [frança
   1.2 MB compressed). The API is free and needs no key; three requests a day stay far below its
   limits.
 - Zones and filters are applied in the container, so one download serves every zone. The counts
-  are computed again every hour, and only changes are sent to Gladys.
+  are computed again every 10 minutes, and only changes are sent to Gladys.
 - The dates of the dataset are Paris wall-clock times carrying a wrong offset (`+02:00` in winter,
   `+00:00` on `date_start`): the integration reads them as Paris times.
 - The ids already announced and the day of the last "Event starting today" are kept in

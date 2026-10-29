@@ -89,7 +89,7 @@ masquer la ligne période et nombre, afficher ou masquer le badge « Gratuit ».
 
 - **Nouvel événement annoncé** : un événement jamais vu, qui correspond à tes filtres, apparaît dans
   une zone suivie (vérifié à chaque téléchargement).
-- **Événement qui commence aujourd'hui** : chaque matin entre 8 h et 9 h, pour chaque événement
+- **Événement qui commence aujourd'hui** : chaque matin vers 8 h (avant 8 h 10), pour chaque événement
   d'une zone suivie qui a une date commençant ce jour-là.
 
 Les deux se filtrent par zone, thème principal et prix, et donnent en variables la zone, le titre,
@@ -116,10 +116,12 @@ lien du premier. Champs : zones, période (ce week-end par défaut), nombre d'é
   [Que faire à Paris ?](https://opendata.paris.fr/explore/dataset/que-faire-a-paris-/) de la Ville
   de Paris, Open Database License (ODbL), environ 3 300 événements, mis à jour chaque jour.
 - L'agenda est téléchargé **toutes les 8 heures** (trois fois par jour au plus, environ 1,2 Mo
-  compressé), et les compteurs sont recalculés chaque heure sans téléchargement. Un téléchargement
+  compressé), et les compteurs sont recalculés toutes les 10 minutes sans téléchargement. Un téléchargement
   raté est retenté une heure plus tard ; les derniers événements connus sont gardés en attendant.
 - Les dates du jeu de données portent un mauvais décalage horaire : l'intégration les lit comme des
   heures de Paris.
+- 50 événements de scène par passage au plus (Gladys en accepte 300 par minute) : la maison
+  d'abord, puis les arrondissements, puis tout Paris, les plus proches d'abord dans chaque zone.
 - Ce qui a déjà été annoncé est gardé dans `/data` : un redémarrage n'annonce rien deux fois.
 
 ## Dépannage

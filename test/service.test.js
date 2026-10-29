@@ -209,3 +209,27 @@ test('an empty export is a failure, not an agenda without events', async (t) => 
   assert.equal(world.service.events, null);
   assert.equal(world.service.error, 'empty agenda');
 });
+
+test('an event missing from one export is not announced again when it comes back', async (t) => {
+  const world = await createWorld();
+  t.after(() => world.app.stop());
+  await create(world, 'Paris 11e');
+  const index = world.network.data.findIndex((record) => record.id === '34541');
+  const [record] = world.network.data.splice(index, 1);
+  await tick(world, READ_EVERY_MS / HOUR);
+  world.network.data.push(record);
+  await tick(world, READ_EVERY_MS / HOUR);
+  const announced = world.fake.sceneEvents.filter((e) => e.key === TRIGGERS.NEW_EVENT);
+  assert.deepEqual(announced, []);
+});
+
+test('around a house no longer located: zero and "none", not stale values', async (t) => {
+  const world = await createWorld();
+  t.after(() => world.app.stop());
+  const device = await create(world, 'maison');
+  assert.ok(world.fake.lastState(featureId(device, 'week')) > 0);
+  world.service.house = null;
+  await tick(world);
+  assert.equal(world.fake.lastState(featureId(device, 'week')), 0);
+  assert.equal(world.fake.lastState(featureId(device, 'next_title')), 'Aucun');
+});

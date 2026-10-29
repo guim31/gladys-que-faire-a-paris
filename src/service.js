@@ -3,7 +3,7 @@
 // tab, the states of the zones added to Gladys, and the scene triggers.
 //
 // Data flow: the agenda is downloaded every 8 hours (three times a day at
-// most; the City updates it once a day). Every hour, without reading
+// most; the City updates it once a day). Every 10 minutes, without reading
 // anything, the counts are computed again against the clock and published
 // when they change. A download bringing events never seen before fires
 // `new_event`; the first pass after 08:00 (Paris) fires `event_today` for the
@@ -12,7 +12,7 @@
 // -----------------------------------------------------------------------------
 
 import { createLogger } from '@gladysassistant/integration-sdk';
-import { DEFAULT_CONFIG, HOME, ZONES, normalizeConfig } from './config.js';
+import { ALL_PARIS, DEFAULT_CONFIG, HOME, ZONES, normalizeConfig } from './config.js';
 import { ZONE_TYPE, buildZoneDevice, placeText, zoneStates } from './devices.js';
 import { inZone, matches } from './filters.js';
 import { REPORTS, THEME_LABELS, allLanguages, formatWhen, pick, priceText } from './messages.js';
@@ -25,24 +25,33 @@ const logger = createLogger({ name: 'que-faire-a-paris' });
 
 // The City updates the agenda once a day: three readings a day at most.
 export const READ_EVERY_MS = 8 * 3600 * 1000;
-// An hourly pass a little early still reads at the 8th hour.
+// A pass a little early still reads at the 8th hour.
 const READ_MARGIN_MS = 5 * 60 * 1000;
 // A failed reading is tried again after this, the known events kept.
 export const RETRY_MS = 3600 * 1000;
 // The agenda never read: tried again after this.
 export const FIRST_RETRY_MS = 10 * 60 * 1000;
-// The counts are computed again against the clock this often.
-export const TICK_MS = 3600 * 1000;
+// The counts are computed again against the clock this often (no network):
+// "today" and "tomorrow" turn at midnight, a started event leaves "next".
+export const TICK_MS = 10 * 60 * 1000;
+// An id missing from the export is forgotten after this: a record briefly
+// unpublished is not announced again when it comes back.
+export const SEEN_TTL_MS = 30 * 24 * 3600 * 1000;
 // Unchanged states are sent again this often, or the dashboard shows "no
 // recent value" after 48 hours.
 export const HEARTBEAT_MS = 6 * 3600 * 1000;
 // `event_today` fires at the first pass from this hour on (Paris).
 export const TODAY_HOUR = 8;
-// Trigger events fired in one pass, at most (the core takes 300 a minute).
+// Trigger events fired in one pass, at most (the core takes 300 a minute):
+// the narrowest zones first (house, arrondissements, then all of Paris),
+// soonest first in each.
 export const MAX_EVENTS = 50;
 
 export const TRIGGERS = { NEW_EVENT: 'new_event', EVENT_TODAY: 'event_today' };
 export const WIDGET_KEY = 'upcoming_events';
+
+/** Trigger events sorted by the start of their date (ISO 8601 strings sort as dates). */
+const soonestFirst = (list) => list.sort((a, b) => a.data.start.localeCompare(b.data.start));
 
 export class Agenda {
   /**
@@ -167,10 +176,16 @@ export class Agenda {
       .filter((entry) => entry.zone);
   }
 
-  /** The events of a zone passing the filters; null before the first reading or when unknown. */
+  /**
+   * The events of a zone passing the filters; null before the first reading.
+   * Around a house not located (any more), none.
+   */
   zoneEvents(zone) {
-    if (this.events === null || (zone === HOME && !this.house)) {
+    if (this.events === null) {
       return null;
+    }
+    if (zone === HOME && !this.house) {
+      return [];
     }
     const where = { house: this.house, radius: this.config.homeRadius };
     return this.events.filter((event) => inZone(event, zone, where) && matches(event, this.config));
@@ -303,7 +318,9 @@ export class Agenda {
       }
     }
     await this.publish(states);
-    const triggers = [...(fresh ? this.newEvents(watched) : []), ...this.todayEvents(watched)];
+    const rank = (zone) => (zone === HOME ? 0 : zone === ALL_PARIS ? 2 : 1);
+    const ordered = [...watched].sort((a, b) => rank(a.zone) - rank(b.zone));
+    const triggers = [...(fresh ? this.newEvents(ordered) : []), ...this.todayEvents(ordered)];
     if (triggers.length > MAX_EVENTS) {
       logger.debug(`${triggers.length} trigger events, only the first ${MAX_EVENTS} fired`);
     }
@@ -353,26 +370,36 @@ export class Agenda {
 
   /** `new_event`: the events never seen before, per zone; the first reading ever is the reference. */
   newEvents(watched) {
+    const now = this.now();
     const known = this.store.get('seen');
+    // id → last time seen in the export.
+    const seen = Object.fromEntries(
+      Object.entries(
+        known && typeof known === 'object' && !Array.isArray(known) ? known : {},
+      ).filter(([, at]) => now - at < SEEN_TTL_MS),
+    );
     const ids = this.events.map((event) => event.id);
-    this.store.set('seen', ids);
-    if (!Array.isArray(known)) {
+    const fresh = new Set(ids.filter((id) => seen[id] === undefined));
+    ids.forEach((id) => {
+      seen[id] = now;
+    });
+    this.store.set('seen', seen);
+    if (!known || typeof known !== 'object' || Array.isArray(known)) {
       return [];
     }
-    const before = new Set(known);
-    const fresh = new Set(ids.filter((id) => !before.has(id)));
     if (fresh.size === 0) {
       return [];
     }
-    const now = this.now();
     const triggers = [];
     for (const entry of watched) {
+      const zone = [];
       for (const event of this.zoneEvents(entry.zone) ?? []) {
         const slot = event.occurrences.find(([, end]) => end > now);
         if (fresh.has(event.id) && slot) {
-          triggers.push({ key: TRIGGERS.NEW_EVENT, data: this.eventData(entry, event, slot) });
+          zone.push({ key: TRIGGERS.NEW_EVENT, data: this.eventData(entry, event, slot) });
         }
       }
+      triggers.push(...soonestFirst(zone));
     }
     return triggers;
   }
@@ -381,8 +408,10 @@ export class Agenda {
   todayEvents(watched) {
     const now = this.now();
     const { date: today, hour } = localParts(now);
-    // Not consumed before a zone is added: added at 08:30, it still gets today's.
-    if (hour < TODAY_HOUR || this.store.get('today') === today || watched.length === 0) {
+    // Consumed only when a zone can be computed: a zone added, or a house
+    // located, at 08:30 still gets the events of the day.
+    const ready = watched.some((entry) => entry.zone !== HOME || this.house);
+    if (hour < TODAY_HOUR || this.store.get('today') === today || !ready) {
       return [];
     }
     this.store.set('today', today);
@@ -390,15 +419,17 @@ export class Agenda {
     const to = zonedInstant(addDays(today, 1));
     const triggers = [];
     for (const entry of watched) {
+      const zone = [];
       for (const event of this.zoneEvents(entry.zone) ?? []) {
         const slot = event.occurrences.find(
           ([start, end]) => start >= from && start < to && end > now,
         );
         // A long run (when shown at all) is news on its first day only.
         if (slot && (!event.longRun || event.occurrences[0][0] >= from)) {
-          triggers.push({ key: TRIGGERS.EVENT_TODAY, data: this.eventData(entry, event, slot) });
+          zone.push({ key: TRIGGERS.EVENT_TODAY, data: this.eventData(entry, event, slot) });
         }
       }
+      triggers.push(...soonestFirst(zone));
     }
     return triggers;
   }

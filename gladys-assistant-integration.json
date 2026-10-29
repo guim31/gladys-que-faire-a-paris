@@ -859,10 +859,10 @@
         "es": "Evento que empieza hoy"
       },
       "description": {
-        "en": "Every morning between 8 and 9, for each event of a followed zone with a date starting today.",
-        "fr": "Chaque matin entre 8 h et 9 h, pour chaque événement d'une zone suivie qui a une date commençant aujourd'hui.",
-        "de": "Jeden Morgen zwischen 8 und 9 Uhr, für jede Veranstaltung einer verfolgten Zone mit einem Termin ab heute.",
-        "es": "Cada mañana entre las 8 y las 9, por cada evento de una zona seguida con una fecha que empieza hoy."
+        "en": "Every morning around 8, for each event of a followed zone with a date starting today.",
+        "fr": "Chaque matin vers 8 h, pour chaque événement d'une zone suivie qui a une date commençant aujourd'hui.",
+        "de": "Jeden Morgen gegen 8 Uhr, für jede Veranstaltung einer verfolgten Zone mit einem Termin ab heute.",
+        "es": "Cada mañana hacia las 8, por cada evento de una zona seguida con una fecha que empieza hoy."
       },
       "fields": [
         {

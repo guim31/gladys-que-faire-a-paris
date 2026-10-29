@@ -156,8 +156,8 @@ export function toEvent(record) {
     longRun:
       occurrences.length > LONG_RUN_DATES ||
       occurrences.some(([start, end]) => end - start > LONG_RUN_DAYS * 86400000),
-    // Title, venue, street, town and tags, normalized once: what keywords search.
-    search: normalize([title, venue, street, city, ...tags].join(' ')),
+    // Title, venue, street and tags, normalized once: what keywords search.
+    search: normalize([title, venue, street, ...tags].join(' ')),
   };
 }
 

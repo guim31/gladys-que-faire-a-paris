@@ -88,7 +88,7 @@ Zeitraum und Anzahl zeigen oder ausblenden, Abzeichen „Kostenlos“ zeigen ode
 
 - **Neue Veranstaltung angekündigt**: eine nie gesehene, zu deinen Filtern passende Veranstaltung
   erscheint in einer verfolgten Zone (bei jedem Download geprüft).
-- **Veranstaltung beginnt heute**: jeden Morgen zwischen 8 und 9 Uhr, für jede Veranstaltung einer
+- **Veranstaltung beginnt heute**: jeden Morgen gegen 8 Uhr (bis 8:10), für jede Veranstaltung einer
   verfolgten Zone mit einem Termin, der an diesem Tag beginnt.
 
 Beide lassen sich nach Zone, Hauptthema und Preis filtern und liefern als Variablen Zone, Titel,
@@ -115,11 +115,13 @@ Wochenende), Zahl der genannten Veranstaltungen (1 bis 10).
   [Que faire à Paris ?](https://opendata.paris.fr/explore/dataset/que-faire-a-paris-/) der Stadt
   Paris, Open Database License (ODbL), etwa 3.300 Veranstaltungen, täglich aktualisiert.
 - Die Agenda wird **alle 8 Stunden** heruntergeladen (höchstens dreimal am Tag, etwa 1,2 MB
-  komprimiert), die Zähler werden jede Stunde ohne Download neu berechnet. Ein fehlgeschlagener
+  komprimiert), die Zähler werden alle 10 Minuten ohne Download neu berechnet. Ein fehlgeschlagener
   Download wird eine Stunde später wiederholt; die zuletzt bekannten Veranstaltungen bleiben solange
   erhalten.
 - Die Daten des Datensatzes tragen einen falschen Zeitversatz: die Integration liest sie als Pariser
   Uhrzeiten.
+- Höchstens 50 Szenen-Ereignisse pro Durchlauf (Gladys nimmt 300 pro Minute): zuerst das Haus,
+  dann die Arrondissements, dann ganz Paris, in jeder Zone die nächsten zuerst.
 - Bereits Angekündigtes wird in `/data` gespeichert: ein Neustart kündigt nichts doppelt an.
 
 ## Fehlerbehebung

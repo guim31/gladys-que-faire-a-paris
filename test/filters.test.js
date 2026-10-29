@@ -90,3 +90,10 @@ test('the configuration tolerates strings, junk and missing values', () => {
   assert.deepEqual(config({ keywords: ' jazz ;; rock,jazz' }).keywords, ['jazz', 'rock']);
   assert.deepEqual(normalizeConfig(null).zones, ['home']);
 });
+
+test('"tonight" after midnight is the night still running', () => {
+  const twoAm = FIXTURE_TIME + 5 * 3600 * 1000 - 23 * 60 * 1000; // Friday 02:00 in Paris
+  const tonight = periodWindow('tonight', twoAm);
+  assert.equal(tonight.from, twoAm);
+  assert.equal(iso(tonight.to), '2026-10-30T04:00:00.000Z');
+});

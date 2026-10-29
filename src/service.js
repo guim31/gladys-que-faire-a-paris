@@ -318,6 +318,7 @@ export class Agenda {
       }
     }
     await this.publish(states);
+    const today = this.store.get('today');
     const rank = (zone) => (zone === HOME ? 0 : zone === ALL_PARIS ? 2 : 1);
     const ordered = [...watched].sort((a, b) => rank(a.zone) - rank(b.zone));
     const triggers = [...(fresh ? this.newEvents(ordered) : []), ...this.todayEvents(ordered)];
@@ -330,7 +331,10 @@ export class Agenda {
     if (fresh) {
       this.refreshWidget();
     }
-    await this.store.save();
+    // /data is written only when its content changed: a new export, a new day.
+    if (fresh || today !== this.store.get('today')) {
+      await this.store.save();
+    }
   }
 
   /** Downloads the agenda when due; true when a new list was read. A failure keeps the known one. */

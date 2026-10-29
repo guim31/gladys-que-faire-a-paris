@@ -1,45 +1,79 @@
 // -----------------------------------------------------------------------------
-// Integration configuration.
-//
-// The configuration is filled in by the user in Gladys, from the `config_schema`
-// declared in `gladys-assistant-integration.json`. The SDK fetches it for you
-// (`gladys.getConfig()`) and notifies you of every change through
-// `gladys.onConfigUpdated()`.
-//
-// This module only provides defaults and normalizes the received object, so the
-// rest of the code never has to deal with `undefined`.
+// Integration configuration: defaults (they mirror the `default` values of the
+// manifest `config_schema`, see test/manifest.test.js) and normalization, so
+// the rest of the code never deals with strings, blanks or `undefined`.
 // -----------------------------------------------------------------------------
 
-// Defaults: they MUST stay consistent with the `default` values declared in the
-// `config_schema` of the manifest.
+import { THEMES } from './themes.js';
+import { parseList } from './text.js';
+
+export const LANGUAGES = ['en', 'fr', 'de', 'es'];
+
+/** The zone keys: around the house, the whole agenda, the 20 arrondissements. Never rename. */
+export const HOME = 'home';
+export const ALL_PARIS = 'paris';
+export const ARRONDISSEMENTS = Array.from(
+  { length: 20 },
+  (_, index) => `750${String(index + 1).padStart(2, '0')}`,
+);
+export const ZONES = [HOME, ALL_PARIS, ...ARRONDISSEMENTS];
+
+/** Radius of the "around the house" zone, in metres. */
+export const HOME_RADII = ['500', '1000', '2000', '5000'];
+
+/** Who the events are for: anyone, or children (tag "Enfants" or a children audience). */
+export const AUDIENCES = ['all', 'kids'];
+
 export const DEFAULT_CONFIG = {
-  latitude: 48.8566, // Paris
-  longitude: 2.3522,
-  unit: 'celsius', // 'celsius' | 'fahrenheit'
-  // Seconds between two reads of the polled sensors. Gladys polls at most once
-  // a minute: slower intervals are applied by skipping polls (see
-  // createPoller in src/devices/index.js).
-  poll_frequency: 300,
-  // Reserved key (NOT in config_schema): because the manifest declares both
-  // 'local' and 'cloud' in its `transports` field, Gladys shows a standard
-  // "Prefer the local connection" toggle and sends the user's choice here.
-  // Read-only for the integration; defaults to true.
-  GLADYS_PREFER_LOCAL: true,
+  zones: [HOME],
+  home_radius: '2000',
+  themes: [],
+  keywords: '',
+  free_only: false,
+  audience: 'all',
+  ongoing: false,
+  language: 'fr',
 };
 
+/** A multi_select value: an array from the form, tolerating a JSON or comma-separated string. */
+export function listOf(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim());
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item).trim());
+      }
+    } catch {
+      // a comma-separated list
+    }
+    return value.split(',').map((item) => item.trim());
+  }
+  return [];
+}
+
+const bool = (value) => value === true || value === 'true';
+
 /**
- * Merge the user config with the defaults.
- * @param {Record<string, unknown>} raw config returned by the SDK
+ * @param {Record<string, unknown>} raw the configuration returned by the SDK
  */
 export function normalizeConfig(raw = {}) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const zones = source.zones === undefined ? DEFAULT_CONFIG.zones : listOf(source.zones);
+  const themes = listOf(source.themes);
+  const radius = HOME_RADII.includes(String(source.home_radius))
+    ? String(source.home_radius)
+    : DEFAULT_CONFIG.home_radius;
   return {
-    ...DEFAULT_CONFIG,
-    ...raw,
-    // Force the types: config may arrive as strings from a form.
-    latitude: Number(raw.latitude ?? DEFAULT_CONFIG.latitude),
-    longitude: Number(raw.longitude ?? DEFAULT_CONFIG.longitude),
-    poll_frequency: Number(raw.poll_frequency ?? DEFAULT_CONFIG.poll_frequency),
-    // The preference is a boolean; anything but an explicit false means true.
-    GLADYS_PREFER_LOCAL: raw.GLADYS_PREFER_LOCAL !== false,
+    zones: ZONES.filter((zone) => zones.includes(zone)),
+    homeRadius: Number(radius),
+    themes: THEMES.filter((theme) => themes.includes(theme)),
+    keywords: parseList(source.keywords).slice(0, 20),
+    freeOnly: bool(source.free_only),
+    audience: AUDIENCES.includes(source.audience) ? source.audience : DEFAULT_CONFIG.audience,
+    ongoing: bool(source.ongoing),
+    language: LANGUAGES.includes(source.language) ? source.language : DEFAULT_CONFIG.language,
   };
 }

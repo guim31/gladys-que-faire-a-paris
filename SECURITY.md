@@ -30,6 +30,13 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration needs no account, no key and no secret. It reads public data only
+(`opendata.paris.fr`, HTTPS, outbound) and receives no inbound connection. It stores in `/data`
+only `state.json`: the ids of the events already announced and the date of the last "event
+starting today" pass, nothing personal. It reads the coordinates of the house from Gladys
+(`location: true`) to count the events around it; they stay in memory and are never sent out nor
+logged.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
 and the third-party services and devices the integration talks to.

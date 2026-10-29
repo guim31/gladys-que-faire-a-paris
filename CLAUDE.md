@@ -32,14 +32,19 @@ pushing.
 
 ```
 index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+src/app.js                        every SDK handler, wired to the service (tests drive the same)
+src/service.js                    download cadence (8 h), hourly pass, zones, states, triggers
+src/source.js                     Opendatasoft export of "Que faire à Paris ?" -> events
+src/filters.js                    periods, zones (house radius, arrondissement), filters
+src/devices.js                    zone device blueprint and its states
+src/themes.js                     qfap_tags -> themes (keys stored by users: never rename)
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
 src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/messages.js                   every text of the code, four languages; src/time.js: Paris time
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/store.js                      /data/state.json (ids announced, last "today" pass)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
@@ -251,3 +256,24 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Que faire à Paris (propre à ce dépôt)
+
+- Source : `opendata.paris.fr`, jeu `que-faire-a-paris-` (Opendatasoft v2.1, sans clé, ODbL, ~3 300
+  fiches, mise à jour quotidienne). Un seul export `exports/json` filtré côté API
+  (`date_end >= date'<aujourd'hui>' and date_start is not null`, champs utiles seulement) : ~1,2 Mo
+  compressé, ~5 Mo en clair. Zones et filtres s'appliquent dans le conteneur : un téléchargement sert
+  toutes les zones. Lecture toutes les 8 h, passe horaire sans réseau.
+- **Piège des dates** : heures murales de Paris avec un faux décalage (`+00:00` sur
+  `date_start`/`date_end`, `+02:00` dans `occurrences` même en hiver). Ignorer le décalage, lire
+  l'heure en `Europe/Paris` (`wallClock`). Vu aussi : une fin avant le début (« 13:30 → 00:00 ») =
+  fin à minuit.
+- `occurrences` : `début_fin;début_fin…`, parfois des centaines (cours hebdomadaire sur trois ans) :
+  « événement long » (> 7 dates ou une date > 14 jours), masqué par défaut.
+- Arrondissement d'après `address_zipcode` (75001…75020, 75116 = 16e) ; `address_city` est saisi à la
+  main et peu fiable. ~1 % des fiches sans `lat_lon`.
+- Appareils : un par zone (`home`, `paris`, `75001`…`75020`), `params.zone`. Les filtres ne changent
+  que les états, jamais la structure.
+- Déclencheurs : `new_event` (ids jamais vus, mémorisés dans `/data`, le premier téléchargement sert de
+  référence), `event_today` (première passe après 8 h, jour mémorisé ; pas consommé tant qu'aucune
+  zone n'est ajoutée). 50 événements de scène par passe au plus.

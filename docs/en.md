@@ -1,61 +1,141 @@
-# Demo Devices Template
+# Que faire à Paris
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+The **outings of the official agenda of the City of Paris**, "Que faire à Paris ?": concerts,
+shows, exhibitions, talks, workshops, walks, for children or not, free or not. Around your house,
+in the arrondissements you choose or in the whole of Paris: how many events today, this weekend and
+in the next 7 days, and the next one to come. **No account, no key.**
+
+Unofficial integration, not affiliated with the City of Paris. Built on the model of the Toulouse
+Agenda integration.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+- One **device per zone**: around the house located in Gladys (500 m to 5 km), the whole agenda, or
+  any of the 20 arrondissements.
+- For each zone: the number of events **today**, **this weekend** and **in the next 7 days**, and
+  the **next event** (title, place, date).
+- Your **filters** apply everywhere: themes, keywords, free events only, events for children,
+  exhibitions and long runs included or not.
+- A **widget** "Outings in Paris": the next events of your zones, with date, place and a "Free"
+  badge; a tap shows the description and the link to paris.fr.
+- Two **scene triggers**: a new event is announced, an event starts today.
+- A **scene action**: what to do this weekend (or tonight, tomorrow…) in one sentence, ready to send
+  or to say.
+
+## Requirements
+
+- Gladys Assistant 5.3.0 or later.
+- Internet access from Gladys (the agenda is read from opendata.paris.fr).
+- For the "Around the house" zone: the house located in Gladys (Settings → Houses).
+
+## Installation
+
+In Gladys, **Integrations → Install from GitHub**, then enter the address of the repository:
+`https://github.com/guim31/gladys-que-faire-a-paris`.
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+### Settings
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+- **Zones**: tick "Around the house", "All of Paris" and/or arrondissements. Each zone becomes a
+  device offered in the Discover tab.
+- **Around the house**: the radius around the house (500 m, 1 km, 2 km, 5 km).
+- **Themes**: music, show, exhibition, cinema, talk, workshop, walk, sport, festival. Nothing ticked:
+  every theme. They come from the tags of the agenda.
+- **Keywords**: comma-separated; an event matches when its title, place, street or tags contain one
+  of them (whole words, accents and case ignored).
+- **Free events only**: "free under conditions" included.
+- **Audience**: everyone, or events for children (tag "Enfants" or a children audience).
+- **Include exhibitions and long runs**: events with more than 7 dates or one date over more than 14
+  days (a permanent exhibition, a weekly class). Off by default, so the counts stay meaningful.
+- **Language of names and messages**: feature names, trigger texts and the scene sentence. The
+  widget follows the language of each user.
 
-## Actions
+### Add zones
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+Save, open the **Discover** tab of the integration and add the zones you want. Changing the filters
+later updates the counts of the zones already added; no need to add them again.
 
-## Scenes
+### Check
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+The **Check** button shows the last download of the agenda, the zones offered and added, and the
+counts of each zone.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+## Devices
 
-## Dashboard
+Each zone has six features, all read-only:
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+| Feature                   | Type    | Content                                |
+| ------------------------- | ------- | -------------------------------------- |
+| Events today              | counter | dates still to come or running today   |
+| Events this weekend       | counter | from Friday 18:00 to Sunday midnight   |
+| Events in the next 7 days | counter | from now to the end of the 7th day     |
+| Next event                | text    | the title of the next date to start    |
+| Place of the next event   | text    | its venue and address                  |
+| Date of the next event    | text    | "tomorrow, 18:30", "Sat 31 Oct, 20:00" |
+
+## Dashboard widget
+
+**Outings in Paris** lists the next events of your zones (all of them, or the ones you pick), 8 at
+most, soonest first: title, date and venue, "Free" badge. Settings: the period (today, tonight,
+tomorrow, this weekend, next 7 days, next 30 days), show or hide the period and count line, show or
+hide the "Free" badge.
+
+## Scene triggers
+
+- **New event announced**: an event never seen before, matching your filters, appears in a followed
+  zone (checked at each download).
+- **Event starting today**: every morning between 8 and 9, for each event of a followed zone with a
+  date starting that day.
+
+Both can be filtered by zone, main theme and price, and give the zone, title, date, place, theme,
+price, description, link and start time as variables.
+
+## Scene action
+
+**What to do in Paris** returns one sentence, for example "This weekend: 34 events, including X
+(Sat 31 Oct, 20:00, Le Trianon), Y (…) and 31 more.", the number of events, and the title and link
+of the first one. Fields: zones, period (this weekend by default), number of events named (1 to 10).
+
+## Scene examples
+
+- Every Friday at 18:00, send the sentence of "What to do in Paris" (this weekend, free events) on
+  Telegram.
+- When an event starts today around the house and its theme is "Music", send a notification with
+  its title and link.
+- Continue only if the number of events of the weekend is greater than 0.
+
+## Data and refresh
+
+- Source: the dataset
+  [Que faire à Paris ?](https://opendata.paris.fr/explore/dataset/que-faire-a-paris-/) of the City
+  of Paris, Open Database License (ODbL), about 3,300 events, updated daily.
+- The agenda is downloaded **every 8 hours** (three times a day at most, about 1.2 MB compressed),
+  and the counts are computed again every hour without any download. A failed download is tried
+  again one hour later; the last known events are kept meanwhile.
+- The dates of the dataset carry a wrong time offset: the integration reads them as Paris times.
+- What was already announced is kept in `/data`, so a restart announces nothing twice.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **No "Around the house" zone in the Discover tab**: locate the house in Gladys, then save the
+  configuration again. The Check button says it.
+- **All counts at 0**: your filters may be too narrow (a keyword, free only, children), or the
+  agenda could not be downloaded yet: see Check and the logs.
+- **"No recent value"**: Gladys did not receive states for 48 hours: the integration is stopped or
+  cannot reach Gladys.
+- More detail in the logs with `LOG_LEVEL=debug`.
+
+## Limitations
+
+- Only the events published in "Que faire à Paris ?": not every venue of Paris publishes there.
+  A few events are in the suburbs; "All of Paris" includes them.
+- Events without coordinates are not counted around the house; events without a Paris postcode are
+  not in any arrondissement.
+- Titles, places and descriptions stay in French, as published.
+- The widget shows 8 events at most (limit of Gladys).
+
+## Credits
+
+- Data: City of Paris, "Que faire à Paris ?", Open Database License (ODbL).
+- Structure and filters adapted from the Toulouse Agenda integration (guim31/gladys-toulouse-agenda).
